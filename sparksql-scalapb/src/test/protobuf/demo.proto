@@ -21,4 +21,5 @@ message Person {
   repeated string tags = 4;
   repeated Address addresses = 5;
   optional Base base = 6;
+  optional Person other_person = 7;
 }
