@@ -26,10 +26,16 @@ object ProtoSQL {
     StructType(cmp.javaDescriptor.getFields.asScala.map(structFieldFor))
   }
 
-  private def toRowData(fd: FieldDescriptor, obj: Any) = fd.getJavaType match {
+  private def toRowData(msg: Any, fd: FieldDescriptor, obj: Any) = fd.getJavaType match {
     case JavaType.BYTE_STRING => obj.asInstanceOf[ByteString].toByteArray
     case JavaType.ENUM => obj.asInstanceOf[EnumValueDescriptor].getName
-    case JavaType.MESSAGE => messageToRow(obj.asInstanceOf[T forSome { type T <: GeneratedMessage with Message[T] }])
+    case JavaType.MESSAGE => {
+      if(obj.isInstanceOf[msg.type]) {
+        null
+      } else {
+        messageToRow(obj.asInstanceOf[T forSome { type T <: GeneratedMessage with Message[T] }])
+      }
+    }
     case _ => obj
   }
 
@@ -41,9 +47,10 @@ object ProtoSQL {
           val obj = msg.getField(fd)
           if (obj != null) {
             if (fd.isRepeated) {
-              obj.asInstanceOf[Traversable[Any]].map(toRowData(fd, _))
+              obj.asInstanceOf[Traversable[Any]].map(toRowData(msg, fd, _))
             } else {
-              toRowData(fd, obj)
+              // Pass `msg` to this function, if `obj` and `msg` are of the same type, return null?
+              toRowData(msg, fd, obj)
             }
           } else null
       }: _*)
