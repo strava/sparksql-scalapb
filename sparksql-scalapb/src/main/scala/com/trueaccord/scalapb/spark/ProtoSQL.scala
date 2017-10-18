@@ -82,4 +82,22 @@ object ProtoSQL {
       nullable = !fd.isRequired && !fd.isRepeated
     )
   }
+
+  def recursiveDataTypeFor(parentFd: FieldDescriptor, fd: FieldDescriptor) = {
+    import org.apache.spark.sql.types._
+    if (parentFd.getFullName() == fd.getFullName()) {
+      StringType
+    } else {
+      dataTypeFor(fd)
+    }
+  }
+
+  def recursiveStructFieldFor(fd: FieldDescriptor, parentFd: FieldDescriptor): StructField = {
+    val dataType = recursiveDataTypeFor(fd, parentFd)
+    StructField(
+      fd.getName,
+      if (fd.isRepeated) ArrayType(dataType, containsNull = false) else dataType,
+      nullable = !fd.isRequired && !fd.isRepeated
+    )
+  }
 }
