@@ -70,7 +70,10 @@ object ProtoSQL {
       case ENUM => StringType
       case MESSAGE =>
         import collection.JavaConverters._
-        StructType(fd.getMessageType.getFields.asScala.map(structFieldFor))
+        StructType(fd.getMessageType.getFields.asScala.map( childFd =>
+          recursiveStructFieldFor(childFd, fd)
+        )
+      )
     }
   }
 
